@@ -120,6 +120,7 @@ projeto_carteira_digital/
 │   ├── routers/
 │   ├── services/
 │   └── persistence/
+│       │── repositories/
 │       └── db.py
 │
 ├── sql/DDL_Carteira_Digital.sql
