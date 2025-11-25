@@ -259,9 +259,7 @@ def transferir(endereco_origem: str, transferencia: TransferenciaRequest):
 
 @app.get("/")
 def root():
-    """
-    Endpoint raiz - verifica se a API está funcionando
-    """
+    
     return {
         "mensagem": "API de Carteira Digital está funcionando!",
         "versao": "1.0.0",
