@@ -1,7 +1,3 @@
-"""
-API de Carteira Digital
-Sistema de gerenciamento de carteiras digitais multi-moedas
-"""
 from fastapi import FastAPI, HTTPException, status
 from app.models import (
     CarteiraResponse, SaldosResponse, OperacaoResponse,
@@ -12,7 +8,7 @@ from app.services import (
     realizar_deposito, realizar_saque, realizar_conversao, realizar_transferencia
 )
 
-# Criar aplicação FastAPI
+# cria aplicação FastAPI
 app = FastAPI(
     title="Carteira Digital API",
     description="API para gerenciamento de carteiras digitais com suporte a múltiplas moedas",
@@ -20,15 +16,10 @@ app = FastAPI(
 )
 
 
-# ENDPOINTS DE CARTEIRAS
-
+# post para criar uma nova carteira
+# retorna o endereço da carteira e a chave privada
 @app.post("/carteiras", response_model=CarteiraResponse, status_code=status.HTTP_201_CREATED)
 def criar_nova_carteira():
-    """
-    Cria uma nova carteira digital
-    
-    Retorna o endereço da carteira e a chave privada (apenas nesta resposta)
-    """
     try:
         resultado = criar_carteira()
         return CarteiraResponse(
@@ -41,14 +32,9 @@ def criar_nova_carteira():
             detail=f"Erro ao criar carteira: {str(e)}"
         )
 
-
+# get para consultar informações de uma carteira (endereço, data de criação e status)
 @app.get("/carteiras/{endereco_carteira}", response_model=CarteiraResponse)
 def consultar_carteira(endereco_carteira: str):
-    """
-    Consulta informações básicas de uma carteira
-    
-    Retorna endereço, data de criação e status
-    """
     carteira = obter_carteira(endereco_carteira)
     
     if not carteira:
@@ -63,15 +49,10 @@ def consultar_carteira(endereco_carteira: str):
         status=carteira['status']
     )
 
-
+# consulta o saldo e retorna lista com o saldo de cada moeda
 @app.get("/carteiras/{endereco_carteira}/saldos", response_model=SaldosResponse)
 def consultar_saldos(endereco_carteira: str):
-    """
-    Consulta os saldos de todas as moedas de uma carteira
-    
-    Retorna lista com saldo de cada moeda (BTC, ETH, SOL, USD, BRL)
-    """
-    # Verificar se carteira existe
+    # verifica se carteira existe
     carteira = obter_carteira(endereco_carteira)
     if not carteira:
         raise HTTPException(
@@ -88,14 +69,9 @@ def consultar_saldos(endereco_carteira: str):
 
 
 # ENDPOINTS DE DEPÓSITOS
-
+# realiza depósito de um tipo de moeda
 @app.post("/carteiras/{endereco_carteira}/depositos", response_model=OperacaoResponse)
 def depositar(endereco_carteira: str, deposito: DepositoRequest):
-    """
-    Realiza um depósito em uma moeda específica
-    
-    Não exige autenticação e não cobra taxa
-    """
     # Verificar se carteira existe
     carteira = obter_carteira(endereco_carteira)
     if not carteira:

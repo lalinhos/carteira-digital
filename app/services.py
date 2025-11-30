@@ -1,6 +1,3 @@
-"""
-Contém a lógica de negócio para todas as operações da carteira
-"""
 from decimal import Decimal
 from app.database import execute_query, execute_transaction
 from app.utils import gerar_chave_publica, gerar_chave_privada, hash_chave_privada, validar_chave_privada
@@ -20,14 +17,14 @@ def criar_carteira():
     chave_privada = gerar_chave_privada()
     hash_chave = hash_chave_privada(chave_privada)
     
-    # Inserir carteira no banco
+    # inserir carteira no banco
     query = """
         INSERT INTO CARTEIRA (endereco_carteira, hash_chave_privada, status)
         VALUES (%s, %s, 'ATIVA')
     """
     execute_query(query, (endereco_carteira, hash_chave), fetch=False)
     
-    # Inicializar saldos zerados para todas as moedas
+    # iniciliza saldos zerados para todas as moedas
     moedas = execute_query("SELECT id_moeda FROM MOEDA")
     for moeda in moedas:
         query_saldo = """
@@ -41,17 +38,8 @@ def criar_carteira():
         'chave_privada': chave_privada
     }
 
-
+# consulta a carteira
 def obter_carteira(endereco_carteira):
-    """
-    Obtém informações básicas de uma carteira
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-    
-    Returns:
-        Dicionário com informações da carteira ou None
-    """
     query = """
         SELECT endereco_carteira, data_criacao, status
         FROM CARTEIRA
@@ -63,17 +51,8 @@ def obter_carteira(endereco_carteira):
         return resultado[0]
     return None
 
-
+# consulta o saldo da carteira
 def obter_saldos(endereco_carteira):
-    """
-    Obtém os saldos de todas as moedas de uma carteira
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-    
-    Returns:
-        Lista de dicionários com codigo, string e saldo
-    """
     query = """
         SELECT m.codigo, m.string, sc.saldo
         FROM SALDO_CARTEIRA sc
@@ -83,17 +62,8 @@ def obter_saldos(endereco_carteira):
     """
     return execute_query(query, (endereco_carteira,))
 
-
+# consulta o código da moeda
 def obter_id_moeda(codigo):
-    """
-    Obtém o id_moeda a partir do código da moeda
-    
-    Args:
-        codigo: Código da moeda (BTC, ETH, etc.)
-    
-    Returns:
-        id_moeda ou None
-    """
     query = """
         SELECT id_moeda
         FROM MOEDA
@@ -105,18 +75,8 @@ def obter_id_moeda(codigo):
         return resultado[0]['id_moeda']
     return None
 
-
+# consulta o saldo da carteira 
 def obter_saldo_moeda(endereco_carteira, codigo_moeda):
-    """
-    Obtém o saldo de uma moeda específica
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-        codigo_moeda: Código da moeda (BTC, ETH, etc.)
-    
-    Returns:
-        Decimal com o saldo ou None
-    """
     query = """
         SELECT sc.saldo
         FROM SALDO_CARTEIRA sc
@@ -129,18 +89,8 @@ def obter_saldo_moeda(endereco_carteira, codigo_moeda):
         return Decimal(str(resultado[0]['saldo']))
     return None
 
-
+# consulta a chave privada pelo endereço da carteira
 def verificar_chave_privada(endereco_carteira, chave_privada):
-    """
-    Verifica se a chave privada corresponde à carteira
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-        chave_privada: Chave privada fornecida
-    
-    Returns:
-        True se válida, False caso contrário
-    """
     query = """
         SELECT hash_chave_privada
         FROM CARTEIRA
@@ -157,30 +107,19 @@ def verificar_chave_privada(endereco_carteira, chave_privada):
 # DEPÓSITOS
 
 def realizar_deposito(endereco_carteira, codigo_moeda, valor):
-    """
-    Realiza um depósito na carteira
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-        codigo_moeda: Código da moeda (BTC, ETH, etc.)
-        valor: Valor do depósito
-    
-    Returns:
-        True se sucesso
-    """
-    # Obter id_moeda
+    # obter id_moeda, chama a função
     id_moeda = obter_id_moeda(codigo_moeda)
     if not id_moeda:
         raise ValueError(f"Moeda {codigo_moeda} não encontrada")
     
     queries = [
-        # Registrar o depósito
+        # insere o depósito na carteira
         ("""
             INSERT INTO DEPOSITO_SAQUE (endereco_carteira, id_moeda, valor, tipo, taxa_valor)
             VALUES (%s, %s, %s, 'DEPOSITO', 0.00000000)
         """, (endereco_carteira, id_moeda, valor)),
         
-        # Atualizar saldo
+        # faz um update e atualiza para o novo saldo
         ("""
             UPDATE SALDO_CARTEIRA
             SET saldo = saldo + %s
@@ -195,32 +134,20 @@ def realizar_deposito(endereco_carteira, codigo_moeda, valor):
 # SAQUES
 
 def realizar_saque(endereco_carteira, codigo_moeda, valor, chave_privada):
-    """
-    Realiza um saque da carteira
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-        codigo_moeda: Código da moeda (BTC, ETH, etc.)
-        valor: Valor do saque
-        chave_privada: Chave privada para autenticação
-    
-    Returns:
-        True se sucesso, levanta exceção se falhar
-    """
-    # Validar chave privada
+    # validar chave privada
     if not verificar_chave_privada(endereco_carteira, chave_privada):
         raise ValueError("Chave privada inválida")
     
-    # Obter id_moeda
+    # obter id_moeda
     id_moeda = obter_id_moeda(codigo_moeda)
     if not id_moeda:
         raise ValueError(f"Moeda {codigo_moeda} não encontrada")
     
-    # Calcular taxa
+    # calcular taxa
     taxa_valor = Decimal(str(valor)) * Decimal(str(TAXA_SAQUE_PERCENTUAL))
     valor_total = Decimal(str(valor)) + taxa_valor
     
-    # Verificar saldo
+    # verificar saldo
     saldo_atual = obter_saldo_moeda(endereco_carteira, codigo_moeda)
     if saldo_atual is None or saldo_atual < valor_total:
         raise ValueError(f"Saldo insuficiente. Necessário: {valor_total}, Disponível: {saldo_atual}")
@@ -247,17 +174,7 @@ def realizar_saque(endereco_carteira, codigo_moeda, valor, chave_privada):
 # CONVERSÃO 
 
 def obter_cotacao_coinbase(codigo_origem, codigo_destino):
-    """
-    Obtém a cotação de conversão da API da Coinbase
-    
-    Args:
-        codigo_origem: Código da moeda de origem
-        codigo_destino: Código da moeda de destino
-    
-    Returns:
-        Decimal com a cotação
-    """
-    url = f"https://api.coinbase.com/v2/prices/{codigo_origem}-{codigo_destino}/spot"
+    url = f"https://api.coinbase.com/v2/prices/{codigo_origem}-{codigo_destino}/spot" # utilizando API da coinbase para cotação
     
     try:
         response = requests.get(url, timeout=10)
@@ -270,20 +187,7 @@ def obter_cotacao_coinbase(codigo_origem, codigo_destino):
 
 
 def realizar_conversao(endereco_carteira, codigo_origem, codigo_destino, valor, chave_privada):
-    """
-    Realiza conversão entre moedas
-    
-    Args:
-        endereco_carteira: Endereço da carteira
-        codigo_origem: Código da moeda de origem
-        codigo_destino: Código da moeda de destino
-        valor: Valor a ser convertido
-        chave_privada: Chave privada para autenticação
-    
-    Returns:
-        Dicionário com detalhes da conversão
-    """
-    # Validar chave privada
+    # chama a função de verificação de chave privada para ver se ela existe
     if not verificar_chave_privada(endereco_carteira, chave_privada):
         raise ValueError("Chave privada inválida")
     
@@ -347,19 +251,6 @@ def realizar_conversao(endereco_carteira, codigo_origem, codigo_destino, valor, 
 # TRANSFERÊNCIA
 
 def realizar_transferencia(endereco_origem, endereco_destino, codigo_moeda, valor, chave_privada):
-    """
-    Realiza transferência entre carteiras
-    
-    Args:
-        endereco_origem: Endereço da carteira de origem
-        endereco_destino: Endereço da carteira de destino
-        codigo_moeda: Código da moeda
-        valor: Valor a ser transferido
-        chave_privada: Chave privada da carteira de origem
-    
-    Returns:
-        True se sucesso
-    """
     # Validar chave privada
     if not verificar_chave_privada(endereco_origem, chave_privada):
         raise ValueError("Chave privada inválida")

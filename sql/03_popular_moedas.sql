@@ -1,6 +1,6 @@
 USE wallet_homolog;
 
--- Inserir as moedas
+-- insere as moedas
 INSERT INTO MOEDA (codigo, string, tipo) VALUES
 ('BTC', 'Bitcoin', 'CRYPTO'),
 ('ETH', 'Ethereum', 'CRYPTO'),

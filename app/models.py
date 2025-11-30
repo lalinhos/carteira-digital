@@ -20,7 +20,6 @@ class SaldoMoedaResponse(BaseModel):
     string: str
     saldo: Decimal
 
-
 class SaldosResponse(BaseModel):
     endereco_carteira: str
     saldos: list[SaldoMoedaResponse]
