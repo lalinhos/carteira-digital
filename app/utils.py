@@ -11,8 +11,6 @@ def gerar_chave_publica():
     """
     Gera uma chave pública (endereço da carteira) aleatória
     
-    Returns:
-        String hexadecimal representando o endereço da carteira
     """
     return secrets.token_hex(PUBLIC_KEY_SIZE)
 
@@ -20,9 +18,7 @@ def gerar_chave_publica():
 def gerar_chave_privada():
     """
     Gera uma chave privada aleatória
-    
-    Returns:
-        String hexadecimal representando a chave privada
+
     """
     return secrets.token_hex(PRIVATE_KEY_SIZE)
 

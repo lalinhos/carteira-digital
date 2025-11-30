@@ -1,15 +1,8 @@
-"""
-Módulo de Conexão com Banco de Dados
-Gerencia a conexão com o MySQL usando SQL puro
-"""
 import pymysql
 from app.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
-
+# conexão com o banco
 def get_connection():
-    """
-    Cria e retorna uma conexão com o banco de dados MySQL
-    """
     connection = pymysql.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -21,19 +14,8 @@ def get_connection():
     )
     return connection
 
-
+# função para executar uma query
 def execute_query(query, params=None, fetch=True):
-    """
-    Executa uma query SQL e retorna os resultados
-    
-    Args:
-        query: String SQL a ser executada
-        params: Tupla ou dicionário com os parâmetros da query
-        fetch: Se True, retorna os resultados (SELECT). Se False, apenas executa (INSERT/UPDATE/DELETE)
-    
-    Returns:
-        Lista de dicionários com os resultados (se fetch=True) ou None
-    """
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
@@ -51,17 +33,8 @@ def execute_query(query, params=None, fetch=True):
     finally:
         connection.close()
 
-
+# função para executar mais de uma query
 def execute_transaction(queries_with_params):
-    """
-    Executa múltiplas queries em uma transação
-    
-    Args:
-        queries_with_params: Lista de tuplas (query, params)
-    
-    Returns:
-        True se sucesso, levanta exceção se falhar
-    """
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
